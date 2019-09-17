@@ -1,0 +1,306 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * 这个文件定义了 zk 底层序列化所需要的 dto
+ * 其定义了所有的实体类的所属包名、类名及类的所有成员变量和类型，该文件会在源代码编译时，
+ * Jute会使用不同的代码生成器为这些类定义生成实际编程语言的类文件，如java语言生成的类文件保存在src/java/generated目录下，每个类都会实现Record接口。
+ * 详细可参考该博文 https://www.cnblogs.com/leesf456/p/6091208.html
+ *
+ * 主要内容有：   module org.apache.zookeeper.data
+ *              module org.apache.zookeeper.proto
+ *              module org.apache.zookeeper.server.quorum
+ *              module org.apache.zookeeper.server.persistence
+ *              module org.apache.zookeeper.txn
+ *
+ */
+module org.apache.zookeeper.data {
+    class Id {
+        ustring scheme;
+        ustring id;
+    }
+    class ACL {
+        int perms;
+        Id id;
+    }
+    // information shared with the client
+    class Stat {
+        long czxid;      // created zxid
+        long mzxid;      // last modified zxid
+        long ctime;      // created
+        long mtime;      // last modified
+        int version;     // version
+        int cversion;    // child version
+        int aversion;    // acl version
+        long ephemeralOwner; // owner id if ephemeral, 0 otw
+        int dataLength;  //length of the data in the node
+        int numChildren; //number of children of this node
+        long pzxid;      // last modified children
+    }
+    // information explicitly stored by the server persistently
+    class StatPersisted {
+        long czxid;      // created zxid
+        long mzxid;      // last modified zxid
+        long ctime;      // created
+        long mtime;      // last modified
+        int version;     // version
+        int cversion;    // child version
+        int aversion;    // acl version
+        long ephemeralOwner; // owner id if ephemeral, 0 otw
+        long pzxid;      // last modified children
+    }
+
+   // information explicitly stored by the version 1 database of servers 
+   class StatPersistedV1 {
+       long czxid; //created zxid
+       long mzxid; //last modified zxid
+       long ctime; //created
+       long mtime; //last modified
+       int version; //version
+       int cversion; //child version
+       int aversion; //acl version
+       long ephemeralOwner; //owner id if ephemeral. 0 otw
+    }
+}
+
+module org.apache.zookeeper.proto {
+    class ConnectRequest {
+        int protocolVersion;  // 协议版本号
+        long lastZxidSeen;  // 最近一次接收到服务器的zxid
+        int timeOut;  // 超时时间
+        long sessionId;
+        buffer passwd;  // 会话密码
+    }
+    class ConnectResponse {
+        int protocolVersion;
+        int timeOut;
+        long sessionId;
+        buffer passwd;
+    }
+    class SetWatches {
+        long relativeZxid;
+        vector<ustring>dataWatches;
+        vector<ustring>existWatches;
+        vector<ustring>childWatches;
+    }        
+    class RequestHeader {
+        int xid; // 记录客户端发起的顺序, 确保客户端请求相应顺序
+        int type;  // 创建节点（OpCode.create）、删除节点（OpCode.delete）、获取节点数据（OpCode.getData）
+    }
+    class MultiHeader {
+        int type;
+        boolean done;
+        int err;
+    }
+    class AuthPacket {
+        int type;
+        ustring scheme;
+        buffer auth;
+    }
+    class ReplyHeader {
+        int xid;  // 与请求头上的一致
+        long zxid;  // 表示Zookeeper服务器上当前最新的事务ID
+        int err;  // 成功（Code.OK）、节点不存在（Code.NONODE）、没有权限（Code.NOAUTH）
+    }
+    class GetDataRequest {  // 客户端发起请求
+        ustring path;  // 节点路径
+        boolean watch;  // 是否监听节点
+    }
+    class SetDataRequest {
+        ustring path;
+        buffer data;
+        int version;  // 期望版本
+    }
+    class SetDataResponse {
+        org.apache.zookeeper.data.Stat stat;
+    }
+    class GetSASLRequest {
+        buffer token;
+    }
+    class SetSASLRequest {
+        buffer token;
+    }
+    class SetSASLResponse {
+        buffer token;
+    }
+    class CreateRequest {
+        ustring path;
+        buffer data;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        int flags;
+    }
+    class DeleteRequest {
+        ustring path;
+        int version;
+    }
+    class GetChildrenRequest {
+        ustring path;
+        boolean watch;
+    }
+    class GetChildren2Request {
+        ustring path;
+        boolean watch;
+    }
+    class CheckVersionRequest {
+        ustring path;
+        int version;
+    }
+    class GetMaxChildrenRequest {
+        ustring path;
+    }
+    class GetMaxChildrenResponse {
+        int max;
+    }
+    class SetMaxChildrenRequest {
+        ustring path;
+        int max;
+    }
+    class SyncRequest {
+        ustring path;
+    }
+    class SyncResponse {
+        ustring path;
+    }
+    class GetACLRequest {
+        ustring path;
+    }
+    class SetACLRequest {
+        ustring path;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        int version;
+    }
+    class SetACLResponse {
+        org.apache.zookeeper.data.Stat stat;
+    }
+    class WatcherEvent {
+        int type;  // event type
+        int state; // state of the Keeper client runtime
+        ustring path;
+    }
+    class ErrorResponse {
+        int err;
+    }
+    class CreateResponse {
+        ustring path;
+    }
+    class ExistsRequest {
+        ustring path;
+        boolean watch;
+    }
+    class ExistsResponse {
+        org.apache.zookeeper.data.Stat stat;
+    }
+    class GetDataResponse {
+        buffer data;
+        org.apache.zookeeper.data.Stat stat;
+    }
+    class GetChildrenResponse {
+        vector<ustring> children;
+    }
+    class GetChildren2Response {
+        vector<ustring> children;
+        org.apache.zookeeper.data.Stat stat;
+    }
+    class GetACLResponse {
+        vector<org.apache.zookeeper.data.ACL> acl;
+        org.apache.zookeeper.data.Stat stat;
+    }
+}
+
+module org.apache.zookeeper.server.quorum {
+    class LearnerInfo {
+        long serverid;
+        int protocolVersion;
+    }
+    class QuorumPacket {
+        int type; // Request, Ack, Commit, Ping
+        long zxid;
+        buffer data; // Only significant when type is request
+        vector<org.apache.zookeeper.data.Id> authinfo;
+    }
+    class QuorumAuthPacket {
+        long magic;
+        int status;
+        buffer token;
+    }
+}
+
+module org.apache.zookeeper.server.persistence {
+    class FileHeader {
+        int magic;
+        int version;
+        long dbid;
+    }
+}
+
+module org.apache.zookeeper.txn {
+    class TxnHeader {
+        long clientId;
+        int cxid;
+        long zxid;
+        long time;
+        int type;
+    }
+    class CreateTxnV0 {
+        ustring path;
+        buffer data;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        boolean ephemeral;
+    }
+    class CreateTxn {
+        ustring path;
+        buffer data;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        boolean ephemeral;
+        int parentCVersion;
+    }
+    class DeleteTxn {
+        ustring path;
+    }
+    class SetDataTxn {
+        ustring path;
+        buffer data;
+        int version;
+    }
+    class CheckVersionTxn {
+        ustring path;
+        int version;
+    }
+    class SetACLTxn {
+        ustring path;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        int version;
+    }
+    class SetMaxChildrenTxn {
+        ustring path;
+        int max;
+    }
+    class CreateSessionTxn {
+        int timeOut;
+    }
+    class ErrorTxn {
+        int err;
+    }
+    class Txn {
+        int type;
+        buffer data;
+    }
+    class MultiTxn {
+        vector<org.apache.zookeeper.txn.Txn> txns;
+    }
+}

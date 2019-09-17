@@ -1,0 +1,8 @@
+zookeeper.nio.numSelectorThreads # selector 的线程数
+zookeeper.nio.numWorkerThreads # selector 配置socket读写的的线程数
+zookeeper.serverCnxnFactory # 指定用于创建表示和客户端连接的工厂实现类的类路径
+zookeeper.observer.syncEnabled # 观察者是否也同步数据
+zookeeper.4lw.commands.whitelist # 允许调用的四字符名单，用 , 隔开
+
+
+readonlymode.enabled # 是否只读
