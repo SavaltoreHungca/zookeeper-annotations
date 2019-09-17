@@ -1,5 +1,27 @@
 为 zookeeper(3.4.16) 翻译了原有的注释，并且添加了更为丰富的注释。
 
+#为什么会有此项目
+zookeeper 代码设计精巧，涵盖分布式系统核心的内容。从中能够学习到io处理，分布式一致性等知识，且代码量并非很多，非常适合学习。
+
+#阅读源码的顺序
+org.apache.zookeeper.server.quorum.QuorumPeerMain 是 zk 服务器端的主入口程序，建议从这里开始按顺序阅读。
+
+需要注意 ./src/java/generated/ 里的类是由 zk 自动生成的，里面大抵是些 DTO，了解一下即可。
+
+org.apache.zookeeper.ZooKeeper 是 zookeeper 的java客户端程序，要了解客户端的运行机制，可以从这里开始学习。
+
+#从zookeeper源码我能学到什么
+你能够学到以下知识点：
+  1. nio 网络编程模型
+  2. 数据的快照，日志存储与恢复
+  3. 集群间通讯方式
+  4. 分布式系统如何保持一致性（paxos算法）
+  5. jmx, jaas 框架的使用
+  6. zk的底层序列化实现jute
+  7. 响应式编程
+
+当然还有很多
+
 #怎么从源码运行zk？
 
 必须环境：
