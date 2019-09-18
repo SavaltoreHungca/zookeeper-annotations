@@ -46,18 +46,19 @@ public interface SessionTracker {
     }
 
     /**
-     * 根据超时事件创建一个 session
+     * 创建一个 session，并设定超时时间
      */
     long createSession(int sessionTimeout);
 
     /**
-     * 添加会话
+     * 添加会话，通常由 createSession 调用
      * @param id
      * @param to
      */
     void addSession(long id, int to);
 
     /**
+     * 检查session 是否超时
      * @param sessionId
      * @param sessionTimeout
      * @return false if session is no longer active
@@ -73,7 +74,7 @@ public interface SessionTracker {
     void setSessionClosing(long sessionId);
 
     /**
-     * 关闭会话管理
+     * 将当前 sessionTracker 停止运行
      */
     void shutdown();
 
@@ -85,7 +86,7 @@ public interface SessionTracker {
     void removeSession(long sessionId);
 
     /**
-     * 检查该 会话 是否有拥有者，如果没有则抛出异常
+     * 检查该 会话 是否绑定到某个对象，如果没有则抛出异常
      * @param sessionId
      * @param owner
      * @throws KeeperException.SessionExpiredException
@@ -93,6 +94,12 @@ public interface SessionTracker {
      */
     void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, SessionMovedException;
 
+    /**
+     * 将会话绑定到某个对象
+     * @param id
+     * @param owner
+     * @throws SessionExpiredException
+     */
     void setOwner(long id, Object owner) throws SessionExpiredException;
 
     /**

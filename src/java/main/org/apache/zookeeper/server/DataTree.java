@@ -77,6 +77,8 @@ import org.slf4j.LoggerFactory;
  *
  * 维护了一个hash表， 映射了节点的路径
  *
+ * 该类是zookeeper内存数据库存储数据的数据结构
+ *
  */
 public class DataTree {
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
@@ -84,6 +86,7 @@ public class DataTree {
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
+     *
      * 提供快速查找节点，完整路径 和 节点的映射，如 /zookeeper/xixi -> DataNode
      */
     private final ConcurrentHashMap<String, DataNode> nodes =
