@@ -217,7 +217,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
      */
     protected NIOServerCnxn createConnection(SocketChannel sock,
             SelectionKey sk) throws IOException {
-        return new NIOServerCnxn(zkServer, sock, sk, this);
+        return new NIOServerCnxn(zkServer, sock, sk, this); // 新建连接，并将感兴趣的事件设为 读
     }
 
     /**
