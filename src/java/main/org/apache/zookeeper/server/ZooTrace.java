@@ -30,6 +30,8 @@ import org.apache.zookeeper.server.quorum.QuorumPacket;
  * 中心化 zk 中的 trace 日志
  * <p>
  * Log4j must be correctly configured to capture the TRACE messages.
+ *
+ * Log4j 必须有正确地配置 trace 信息
  */
 public class ZooTrace {
     final static public long CLIENT_REQUEST_TRACE_MASK = 1 << 1;
@@ -54,20 +56,40 @@ public class ZooTrace {
             | SERVER_PACKET_TRACE_MASK | SESSION_TRACE_MASK
             | WARNING_TRACE_MASK;
 
+    /**
+     * 获取追踪等级
+     * @return
+     */
     public static long getTextTraceLevel() {
         return traceMask;
     }
 
+    /**
+     * 设置追踪等级，不同的等级追踪的信息程度不相同
+     * @param mask
+     */
     public static void setTextTraceLevel(long mask) {
         traceMask = mask;
         Logger LOG = LoggerFactory.getLogger(ZooTrace.class);
         LOG.info("Set text trace mask to 0x" + Long.toHexString(mask));
     }
 
+    /**
+     * 是否开启信息追踪和给定的追踪等级是否可用
+     * @param log
+     * @param mask
+     * @return
+     */
     public static boolean isTraceEnabled(Logger log, long mask) {
         return log.isTraceEnabled() && (mask & traceMask) != 0;
     }
 
+    /**
+     * 如果开启相应级别的追踪信息，则打印消息
+     * @param log
+     * @param mask
+     * @param msg
+     */
     public static void logTraceMessage(Logger log, long mask, String msg) {
         if (isTraceEnabled(log, mask)) {
             log.trace(msg);
