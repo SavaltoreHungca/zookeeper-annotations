@@ -30,6 +30,8 @@ import org.junit.runners.model.Statement;
 /**
  * The sole responsibility of this class is to print to the log when a test
  * starts and when it finishes.
+ *
+ * 负责打印日志当测试启动和停止时
  */
 public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
     private static final Logger LOG = LoggerFactory.getLogger(JUnit4ZKTestRunner.class);

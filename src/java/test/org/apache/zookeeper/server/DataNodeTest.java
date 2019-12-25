@@ -23,13 +23,17 @@ import java.util.Set;
 
 import org.junit.Test;
 
+/**
+ *
+ */
 public class DataNodeTest {
 
     @Test
     public void testGetChildrenShouldReturnEmptySetWhenThereAreNoChidren() {
         // create DataNode and call getChildren
+        // 创建一个节点
         DataNode dataNode = new DataNode();
-        Set<String> children = dataNode.getChildren();
+        Set<String> children = dataNode.getChildren(); // 获取子节点
         assertNotNull(children);
         assertEquals(0, children.size());
 

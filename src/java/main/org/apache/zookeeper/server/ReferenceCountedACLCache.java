@@ -46,7 +46,7 @@ public class ReferenceCountedACLCache {
 
     final Map<Long, AtomicLongWithEquals> referenceCounter =
             new HashMap<Long, AtomicLongWithEquals>();
-    private static final long OPEN_UNSAFE_ACL_ID = -1L;
+    private static final long OPEN_UNSAFE_ACL_ID = -1L; // 不设置任何策略
 
     /**
      * these are the number of acls that we have in the datatree
@@ -56,12 +56,15 @@ public class ReferenceCountedACLCache {
     /**
      * converts the list of acls to a long.
      * Increments the reference counter for this ACL.
+     *
+     *
+     *
      * @param acls
      * @return a long that map to the acls
      */
     public synchronized Long convertAcls(List<ACL> acls) {
         if (acls == null)
-            return OPEN_UNSAFE_ACL_ID;
+            return OPEN_UNSAFE_ACL_ID; // 未设置安全策略
 
         // get the value from the map
         Long ret = aclKeyMap.get(acls);
@@ -195,6 +198,9 @@ public class ReferenceCountedACLCache {
         }
     }
 
+    /**
+     * 主要重写了 equals 函数
+     */
     private static class AtomicLongWithEquals extends AtomicLong {
 
         private static final long serialVersionUID = 3355155896813725462L;

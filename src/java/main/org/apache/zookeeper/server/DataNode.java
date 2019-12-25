@@ -35,18 +35,27 @@ import org.apache.zookeeper.data.StatPersisted;
  * A data node contains a reference to its parent, a byte array as its data, an
  * array of ACLs, a stat object, and a set of its children's paths.
  *
- * data tree 的节点，包含了他爸爸节点，和存储的数据（一个byte数组），和acl的id 等等
+ * data tree 的节点
  *
  */
 public class DataNode implements Record {
     /** the parent of this datanode */
     DataNode parent;
 
-    /** the data for this datanode */
+    /** the data for this datanode
+     *
+     * 该成员有以下作用
+     *      1。 作为普通的节点： 则存储用户为该节点设定的数据
+     *      2。 作为 /zookeeper/quota 下的子节点：
+     *              用于存储普通节点的配额信息，其含义是字符串类似于
+     *                  count=-1,bytes=512
+     * */
     byte data[];
 
     /**
      * the acl map long for this datanode. the datatree has the map
+     *
+     * 对应的权限
      */
     Long acl;
 
@@ -62,6 +71,10 @@ public class DataNode implements Record {
      * the list of children for this node. note that the list of children string
      * does not contain the parent path -- just the last part of the path. This
      * should be synchronized on except deserializing (for speed up issues).
+     *
+     * 该节点的子节点集合
+     * 不是完整路径，值包含相对路径
+     *
      */
     private Set<String> children = null;
 
@@ -95,7 +108,9 @@ public class DataNode implements Record {
 
     /**
      * Method that inserts a child into the children set
-     * 
+     *
+     * 添加一个子节点
+     *
      * @param child
      *            to be inserted
      * @return true if this set did not already contain the specified element
@@ -110,7 +125,9 @@ public class DataNode implements Record {
 
     /**
      * Method that removes a child from the children set
-     * 
+     *
+     * 移除子节点
+     *
      * @param child
      * @return true if this set contained the specified element
      */
@@ -143,6 +160,11 @@ public class DataNode implements Record {
         return Collections.unmodifiableSet(children); // 只读
     }
 
+
+    /**
+     * 将当前节点的信息复制给 to
+     * @param to
+     */
     synchronized public void copyStat(Stat to) {
         to.setAversion(stat.getAversion());
         to.setCtime(stat.getCtime());
@@ -164,6 +186,15 @@ public class DataNode implements Record {
         to.setNumChildren(numChildren);
     }
 
+    /**
+     *
+     * 反序列化
+     * 一般来说用于从磁盘中恢复节点
+     *
+     * @param archive
+     * @param tag
+     * @throws IOException
+     */
     synchronized public void deserialize(InputArchive archive, String tag)
             throws IOException {
         archive.startRecord("node");
@@ -174,6 +205,15 @@ public class DataNode implements Record {
         archive.endRecord("node");
     }
 
+    /**
+     * 序列化
+     *
+     * zk 的序列化实现可参考 org.apache.jute.compiler 包下的文件
+     *
+     * @param archive
+     * @param tag
+     * @throws IOException
+     */
     synchronized public void serialize(OutputArchive archive, String tag)
             throws IOException {
         archive.startRecord(this, "node");

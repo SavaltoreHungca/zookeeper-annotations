@@ -36,6 +36,11 @@ import java.net.InetAddress;
  *
  * Basic utilities shared by all tests. Also logging of various events during
  * the test execution (start/stop/success/failure/etc...)
+ *
+ * 基础的测试类，指定测试 runner 和 规则
+ *
+ * 当测试执行时会打印任何变化的事件
+ *
  */
 @RunWith(JUnit4ZKTestRunner.class)
 public class ZKTestCase {
@@ -54,21 +59,25 @@ public class ZKTestCase {
             testName = method.getName();
             // ZOOKEEPER-2693 disables all 4lw by default.
             // Here we enable the 4lw which ZooKeeper tests depends.
+            // 允许所有的 四字符 指令
             System.setProperty("zookeeper.4lw.commands.whitelist", "*");
 
-            LOG.info("STARTING " + testName);
+            LOG.info("STARTING " + testName); // 开始测试指定的测试实例
         }
 
+        // 测试完成
         @Override
         public void finished(FrameworkMethod method) {
             LOG.info("FINISHED " + testName);
         }
 
+        // 成功
         @Override
         public void succeeded(FrameworkMethod method) {
             LOG.info("SUCCEEDED " + testName);
         }
 
+        // 失败，并打印异常
         @Override
         public void failed(Throwable e, FrameworkMethod method) {
             LOG.info("FAILED " + testName, e);
@@ -76,6 +85,7 @@ public class ZKTestCase {
 
     };
 
+    // 检测 ipv6 是否启用
     protected void assumeIPv6Available() {
         try {
             InetAddress address = Inet6Address.getByName("0:0:0:0:0:0:0:1");

@@ -20,6 +20,8 @@ package org.apache.zookeeper;
 
 /**
  * a class that represents the stats associated with quotas
+ *
+ * 存储节点的配额信息
  */
 public class StatsTrack {
     private int count;
@@ -30,6 +32,8 @@ public class StatsTrack {
     /**
      * a default constructor for
      * stats
+     *
+     *
      */
     public StatsTrack() {
         this(null);
@@ -38,6 +42,9 @@ public class StatsTrack {
      * the stat string should be of the form count=int,bytes=long
      * if stats is called with null the count and bytes are initialized
      * to -1.
+     *
+     * 新建节点的配额信息，表达式为 count=int,bytes=long
+     *
      * @param stats the stat string to be intialized with
      */
     public StatsTrack(String stats) {
@@ -55,6 +62,8 @@ public class StatsTrack {
 
     /**
      * get the count of nodes allowed as part of quota
+     *
+     * 获取节点使用了多少节点（包含自身和子节点）
      *
      * @return the count as part of this string
      */
@@ -74,6 +83,8 @@ public class StatsTrack {
 
     /**
      * get the count of bytes allowed as part of quota
+     *
+     * 占用了多少资源
      *
      * @return the bytes as part of this string
      */

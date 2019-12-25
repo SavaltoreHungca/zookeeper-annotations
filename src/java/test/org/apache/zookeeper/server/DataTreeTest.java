@@ -67,6 +67,8 @@ public class DataTreeTest extends ZKTestCase {
     /**
      * For ZOOKEEPER-1755 - Test race condition when taking dumpEphemerals and
      * removing the session related ephemerals from DataTree structure
+     *
+     * 测试操作移除临时节点时的多线程竞争问题
      */
     @Test(timeout = 60000)
     public void testDumpEphemerals() throws Exception {
@@ -75,7 +77,7 @@ public class DataTreeTest extends ZKTestCase {
         long zxid = 2000;
         final DataTree dataTree = new DataTree();
         LOG.info("Create {} zkclient sessions and its ephemeral nodes", count);
-        createEphemeralNode(session, dataTree, count);
+        createEphemeralNode(session, dataTree, count); // 创建临时节点
         final AtomicBoolean exceptionDuringDumpEphemerals = new AtomicBoolean(
                 false);
         final AtomicBoolean running = new AtomicBoolean(true);
@@ -108,6 +110,9 @@ public class DataTreeTest extends ZKTestCase {
         }
     }
 
+    /**
+     * 循环调用 dataTree.createNode 来创建新节点
+     */
     private void createEphemeralNode(long session, final DataTree dataTree,
             int count) throws NoNodeException, NodeExistsException {
         for (int i = 0; i < count; i++) {

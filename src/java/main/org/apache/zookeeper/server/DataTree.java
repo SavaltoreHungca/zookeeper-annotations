@@ -99,15 +99,22 @@ public class DataTree {
     /** the root of zookeeper tree */
     private static final String rootZookeeper = "/"; // 根节点
 
-    /** the zookeeper nodes that acts as the management and status node **/
+    /** the zookeeper nodes that acts as the management and status node
+     * 该节点扮演管理员的角色
+     */
     private static final String procZookeeper = Quotas.procZookeeper; // /zookeeper
 
-    /** this will be the string thats stored as a child of root */
+    /** this will be the string thats stored as a child of root
+     *
+     */
     private static final String procChildZookeeper = procZookeeper.substring(1); // zookeeper
 
     /**
      * the zookeeper quota node that acts as the quota management node for
      * zookeeper
+     *
+     * 该节点负责管理各个节点的配额信息
+     *
      */
     private static final String quotaZookeeper = Quotas.quotaZookeeper; // /zookeeper/quota
 
@@ -118,21 +125,30 @@ public class DataTree {
     /**
      * the path trie that keeps track fo the quota nodes in this datatree
      *
-     * 路径字典树
+     * 路径字典树，一种数据结构，根据路径检索时很快
      *
      */
     private final PathTrie pTrie = new PathTrie();
 
     /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
+     *
      * sessionId 和 临时节点的映射
      */
     private final Map<Long, HashSet<String>> ephemerals =
         new ConcurrentHashMap<Long, HashSet<String>>();
 
     // access control list
+    // 访问权限列表
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
+
+    /**
+     * 获取指定会话的所有临时节点
+     *
+     * @param sessionId
+     * @return
+     */
     @SuppressWarnings("unchecked")
     public HashSet<String> getEphemerals(long sessionId) {
         HashSet<String> retv = ephemerals.get(sessionId);
@@ -151,6 +167,10 @@ public class DataTree {
     }
 
 
+    /**
+     * 获取会话集合
+     * @return
+     */
     public Collection<Long> getSessions() {
         return ephemerals.keySet();
     }
@@ -172,14 +192,22 @@ public class DataTree {
         return nodes.get(path);
     }
 
+    /**
+     * @return 节点数
+     */
     public int getNodeCount() {
         return nodes.size();
     }
+
 
     public int getWatchCount() {
         return dataWatches.size() + childWatches.size();
     }
 
+    /**
+     *
+     * @return 所有会话的临时节点数
+     */
     public int getEphemeralsCount() {
         Map<Long, HashSet<String>> map = this.getEphemeralsMap();
         int result = 0;
@@ -191,6 +219,8 @@ public class DataTree {
 
     /**
      * Get the size of the nodes based on path and data length.
+     *
+     * 获取目前所有节点已存储的数据量大小
      *
      * @return size of the data
      */
@@ -210,12 +240,18 @@ public class DataTree {
     /**
      * This is a pointer to the root of the DataTree. It is the source of truth,
      * but we usually use the nodes hashmap to find nodes in the tree.
+     *
+     * 该节点代表路径树的根节点。
+     * 不过通常还是通过 hashmap 检索对应路径的节点
+     *
      */
     private DataNode root = new DataNode(null, new byte[0], -1L,
             new StatPersisted());
 
     /**
      * create a /zookeeper filesystem that is the proc filesystem of zookeeper
+     *
+     * 创建 /zookeeper 节点
      */
     private DataNode procDataNode = new DataNode(root, new byte[0], -1L,
             new StatPersisted());
@@ -223,6 +259,8 @@ public class DataTree {
     /**
      * create a /zookeeper/quota node for maintaining quota properties for
      * zookeeper
+     *
+     * 创建 /zookeeper/quota 节点用于维护配额
      */
     private DataNode quotaDataNode = new DataNode(procDataNode, new byte[0],
             -1L, new StatPersisted());
@@ -230,18 +268,23 @@ public class DataTree {
     public DataTree() {
         /* Rather than fight it, let root have an alias */
         nodes.put("", root);
-        nodes.put(rootZookeeper, root);
+        nodes.put(rootZookeeper, root); // "" 和 / 都代表根节点的路径
 
         /** add the proc node and quota node */
-        root.addChild(procChildZookeeper);
-        nodes.put(procZookeeper, procDataNode);
+        root.addChild(procChildZookeeper); // 将 /zookeepr 节点作为root的子节点
+        nodes.put(procZookeeper, procDataNode); // 将路径和节点的映射添加进 hashmap
 
-        procDataNode.addChild(quotaChildZookeeper);
+        procDataNode.addChild(quotaChildZookeeper); // 同上的方式添加 /zookeeper/quota 节点
         nodes.put(quotaZookeeper, quotaDataNode);
     }
 
     /**
      * is the path one of the special paths owned by zookeeper.
+     *
+     * 特殊节点指 /zookeeper
+     *          /zookeeper/quota
+     *          /
+     * 这三个节点
      *
      * @param path
      *            the path to be checked
@@ -284,30 +327,34 @@ public class DataTree {
     /**
      * update the count of this stat datanode
      *
+     * 更新该节点使用的节点数量
+     *
      * @param lastPrefix
      *            the path of the node that is quotaed.
+     *            被分配配额的路径
      * @param diff
      *            the diff to be added to the count
+     *            要添加的节点数
      */
     public void updateCount(String lastPrefix, int diff) {
-        String statNode = Quotas.statPath(lastPrefix);
-        DataNode node = nodes.get(statNode);
+        String statNode = Quotas.statPath(lastPrefix); // 获取表示节点配额信息的节点路径
+        DataNode node = nodes.get(statNode); // 获取当前节点的配额节点
         StatsTrack updatedStat = null;
-        if (node == null) {
+        if (node == null) { // 一般来说不会出现某个节点没有其相关的配额信息
             // should not happen
             LOG.error("Missing count node for stat " + statNode);
             return;
         }
         synchronized (node) {
             updatedStat = new StatsTrack(new String(node.data));
-            updatedStat.setCount(updatedStat.getCount() + diff);
-            node.data = updatedStat.toString().getBytes();
+            updatedStat.setCount(updatedStat.getCount() + diff); // 将该节点使用的节点数 + diff 个
+            node.data = updatedStat.toString().getBytes(); // 更新 配额 信息
         }
         // now check if the counts match the quota
-        String quotaNode = Quotas.quotaPath(lastPrefix);
+        String quotaNode = Quotas.quotaPath(lastPrefix); // 获取配额限制节点
         node = nodes.get(quotaNode);
         StatsTrack thisStats = null;
-        if (node == null) {
+        if (node == null) { // 同上，一般不可能发生
             // should not happen
             LOG.error("Missing count node for quota " + quotaNode);
             return;
@@ -315,6 +362,12 @@ public class DataTree {
         synchronized (node) {
             thisStats = new StatsTrack(new String(node.data));
         }
+        /**
+         * thisStats 表示用户对节点做的配额限制，如限制节点数只能 5 个等
+         * updatedStat 表示当前节点的配额状态
+         *
+         * 从这里可以看到，即使我们的节点超出了实际配额，也仅仅只是服务器警告一下。
+         */
         if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
             LOG
             .warn("Quota exceeded: " + lastPrefix + " count="
@@ -325,6 +378,8 @@ public class DataTree {
 
     /**
      * update the count of bytes of this stat datanode
+     *
+     * 更新节点使用的资源大小，方式同 updateCount 一样，这里不再赘述
      *
      * @param lastPrefix
      *            the path of the node that is quotaed
@@ -370,25 +425,35 @@ public class DataTree {
     }
 
     /**
+     *
+     * 新建节点
+     *
      * @param path
      * @param data
      * @param acl
      * @param ephemeralOwner
      *            the session id that owns this node. -1 indicates this is not
      *            an ephemeral node.
+     *
+     *            如果该值为 -1 表示新增的节点不是临时节点
+     *            该值为会话 id 表示新增节点是临时节点
+     *
      * @param zxid
      * @param time
      * @return the patch of the created node
+     *          返回新建节点的路径
+     *
      * @throws KeeperException
      */
     public String createNode(String path, byte data[], List<ACL> acl,
             long ephemeralOwner, int parentCVersion, long zxid, long time)
             throws KeeperException.NoNodeException,
             KeeperException.NodeExistsException {
+
         int lastSlash = path.lastIndexOf('/');
-        String parentName = path.substring(0, lastSlash);
-        String childName = path.substring(lastSlash + 1);
-        StatPersisted stat = new StatPersisted();
+        String parentName = path.substring(0, lastSlash); // 父节点路径
+        String childName = path.substring(lastSlash + 1); // 获取当前节点路径名
+        StatPersisted stat = new StatPersisted(); // 存储当前的节点信息，主要用于序列化
         stat.setCtime(time);
         stat.setMtime(time);
         stat.setCzxid(zxid);
@@ -397,39 +462,45 @@ public class DataTree {
         stat.setVersion(0);
         stat.setAversion(0);
         stat.setEphemeralOwner(ephemeralOwner);
-        DataNode parent = nodes.get(parentName);
-        if (parent == null) {
+        DataNode parent = nodes.get(parentName); // 获取父节点
+        if (parent == null) { // 父节点必须存在
             throw new KeeperException.NoNodeException();
         }
         synchronized (parent) {
-            Set<String> children = parent.getChildren();
-            if (children.contains(childName)) {
+            Set<String> children = parent.getChildren(); // 获取父节点的子节点集合
+            if (children.contains(childName)) { // 新建的节点必须是不存在的
                 throw new KeeperException.NodeExistsException();
             }
-            
+
+            /* 设置版本信息 */
             if (parentCVersion == -1) {
                 parentCVersion = parent.stat.getCversion();
                 parentCVersion++;
             }    
             parent.stat.setCversion(parentCVersion);
-            parent.stat.setPzxid(zxid);
+            parent.stat.setPzxid(zxid); // 设置 事务id
+
             Long longval = aclCache.convertAcls(acl);
+
+            // child 便是我们此次新建的接待你
             DataNode child = new DataNode(parent, data, longval, stat);
-            parent.addChild(childName);
-            nodes.put(path, child);
-            if (ephemeralOwner != 0) {
-                HashSet<String> list = ephemerals.get(ephemeralOwner);
+
+            parent.addChild(childName); // 将 child 加进parent的子节点集合
+            nodes.put(path, child); // 将 child 添加进路径映射集合
+
+            if (ephemeralOwner != 0) { // ephemeralOwner 表示的是 sessionid
+                HashSet<String> list = ephemerals.get(ephemeralOwner); // 获取临时节点集合
                 if (list == null) {
                     list = new HashSet<String>();
                     ephemerals.put(ephemeralOwner, list);
                 }
                 synchronized (list) {
-                    list.add(path);
+                    list.add(path); // 间临时节点路径添加进集合
                 }
             }
         }
         // now check if its one of the zookeeper node child
-        if (parentName.startsWith(quotaZookeeper)) {
+        if (parentName.startsWith(quotaZookeeper)) { // 检查创建的是否是配额节点
             // now check if its the limit node
             if (Quotas.limitNode.equals(childName)) {
                 // this is the limit node
@@ -442,6 +513,7 @@ public class DataTree {
             }
         }
         // also check to update the quotas for this node
+        //
         String lastPrefix;
         if((lastPrefix = getMaxPrefixWithQuota(path)) != null) {
             // ok we have some match and need to update

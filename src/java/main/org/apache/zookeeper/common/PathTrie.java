@@ -39,6 +39,11 @@ import org.slf4j.LoggerFactory;
  *      (bc)
  *   cf/
  *   (cf)
+ *
+ * 该数据结构是 zk 的内存数据库所用到
+ *
+ * 如果对该类数据结构不太清楚，可以去查看下字典树
+ *
  */    
 public class PathTrie {
     /**
@@ -48,16 +53,25 @@ public class PathTrie {
     
     /**
      * the root node of PathTrie
+     *
+     * 根结点
+     *
      */
     private final TrieNode rootNode ;
     
     static class TrieNode {
-        boolean property = false;
+        boolean property = false; // 一个标志位
+
+        // 子节点，你可以将 String 作为该数据结构存储的值
+        // 而我们所需要和所检索的就是 String，即路径
         final HashMap<String, TrieNode> children;
-        TrieNode parent = null;
+        TrieNode parent = null; // 父节点
         /**
          * create a trienode with parent
          * as parameter
+         *
+         * 创建一个 trienode
+         *
          * @param parent the parent of this trienode
          */
         private TrieNode(TrieNode parent) {
@@ -100,6 +114,9 @@ public class PathTrie {
         }
         /**
          * add a child to the existing node
+         *
+         * 添加一个子节点
+         *
          * @param childName the string name of the child
          * @param node the node that is the child
          */
@@ -114,19 +131,21 @@ public class PathTrie {
      
         /**
          * delete child from this node
+         * 删除该子节点
+         *
          * @param childName the string name of the child to 
          * be deleted
          */
         void deleteChild(String childName) {
             synchronized(children) {
-                if (!children.containsKey(childName)) {
+                if (!children.containsKey(childName)) { // 子节点不存在
                     return;
                 }
                 TrieNode childNode = children.get(childName);
                 // this is the only child node.
                 if (childNode.getChildren().length == 1) { 
-                    childNode.setParent(null);
-                    children.remove(childName);
+                    childNode.setParent(null); // 将其含有的父节点引用置空
+                    children.remove(childName); // 从该节点中移除子节点
                 }
                 else {
                     // their are more child nodes
@@ -139,6 +158,9 @@ public class PathTrie {
         /**
          * return the child of a node mapping
          * to the input childname
+         *
+         * 获取子节点
+         *
          * @param childName the name of the child
          * @return the child of a node
          */
@@ -156,6 +178,9 @@ public class PathTrie {
         /**
          * get the list of children of this 
          * trienode.
+         *
+         * 获取所有的子路径
+         *
          * @param node to get its children
          * @return the string list of its children
          */
@@ -168,6 +193,9 @@ public class PathTrie {
         /**
          * get the string representation
          * for this node
+         *
+         * 打印该节点的所有子节点
+         *
          */
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -179,28 +207,34 @@ public class PathTrie {
             }
             return sb.toString();
         }
-    }
+    } // TrieNode 结束
     
     /**
      * construct a new PathTrie with
      * a root node of /
+     *
+     * 新建 pathTrie，并初始化根节点
+     *
      */
     public PathTrie() {
         this.rootNode = new TrieNode(null);
     }
     
     /**
-     * add a path to the path trie 
+     * add a path to the path trie
+     *
+     * 添加路径
+     *
      * @param path
      */
     public void addPath(String path) {
         if (path == null) {
             return;
         }
-        String[] pathComponents = path.split("/");
+        String[] pathComponents = path.split("/"); // 将所有的路径名提取出来
         TrieNode parent = rootNode;
         String part = null;
-        if (pathComponents.length <= 1) {
+        if (pathComponents.length <= 1) { // 非法的路径
             throw new IllegalArgumentException("Invalid path " + path);
         }
         for (int i=1; i<pathComponents.length; i++) {
@@ -242,6 +276,9 @@ public class PathTrie {
     
     /**
      * return the largest prefix for the input path.
+     *
+     * 找出最长的那一条路径
+     *
      * @param path the input path
      * @return the largest prefix for the input path.
      */
@@ -255,7 +292,7 @@ public class PathTrie {
         String[] pathComponents = path.split("/");
         TrieNode parent = rootNode;
         List<String> components = new ArrayList<String>();
-        if (pathComponents.length <= 1) {
+        if (pathComponents.length <= 1) { // 不合法的路径
             throw new IllegalArgumentException("Invalid path " + path);
         }
         int i = 1;
